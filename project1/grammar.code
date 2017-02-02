@@ -1,11 +1,89 @@
 <define PARSE CODE.Program/>
-<define TOKEN (("<" "=") (">" "=") ("[""]"))/>
+<define TOKEN (("<" "=") (">" "=") ("[" "]") (":" "="))/>
 
-<define KEYWORDS (("hd") ("tl") ("ref") ("not") ("and") ("or"))/>
+<define KEYWORDS (
+    ("hd") 
+    ("tl") 
+    ("ref") 
+    ("not") 
+    ("and") 
+    ("or") 
+    ("while") 
+    ("do") 
+    ("val") 
+    ("int") 
+    ("real") 
+    ("unit") 
+    ("bool")
+    ("if")
+    ("then")
+    ("else")
+    ("let")
+    ("in")
+    )/>
 
-<code Program parse=LIST((CODE.ListH ";"), "\n")/>
+<* 
+    p:  CODE.Program
+    c:  CODE.Sequence
+    s:  CODE.Statement
+    d:  CODE.Bind
+    t:  CODE.Type
+    e2: CODE.Update
+/*>
 
-<code ListH parse=(CODE.BoolH CODE.List)/>
+<code Program parse=(CODE.ProgramH | "")/>
+<code ProgramH parse=((CODE.Statement CODE.ProgramH) | "")/>
+
+<code Statement parse=(
+      (CODE.Update ";")
+    | (CODE.Bind ";")
+    | ("while" CODE.Expression "do" CODE.Statement))/>
+
+<code Bind parse=("val" ID ":" CODE.Type "=" )/>
+
+
+<* ************************ /*>
+<* BEGIN CODE.Update syntax /*>
+<* ************************ /*>
+
+<code Update parse=(("(" CODE.Program CODE.CondAssign ")") 
+    | CODE.CondAssign)/>
+<* Double right recursion? Legal? /*>
+<code CondAssign parse=(("if" CODE.Expression "then" CODE.LetAssign "else" CODE.LetAssign) 
+    | CODE.LetAssign)/>
+<code LetAssign parse=(("let" CODE.Sequence "in" CODE.Program CODE.Update "end") 
+    | CODE.UpdateValue)/>
+<code UpdateValue parse=((CODE.Expression ":=" CODE.Update))/>
+
+<* ********************** /*>
+<* END CODE.Update syntax /*>
+<* ********************** /*>
+
+
+<code Sequence parse=((CODE.Update CODE.SequenceH))/>
+<code SequenceH parse=((";" CODE.Update CODE.SequenceH) | "")/>
+
+<* **************************** /*>
+<* BEGIN CODE.Type syntax /*>
+<* **************************** /*>
+
+<code Type parse=(CODE.TList CODE.TMul)/>
+<code TMul parse=(("*" CODE.TList CODE.TMul) | "")/>
+
+<code TList parse=(CODE.TRef "list" | CODE.TRef)/>
+<code TRef parse=(CODE.TType "ref" | CODE.TType)/>
+<code TType parse=("int" | "real" | "unit" | "bool")/>
+
+<* ************************** /*>
+<* END CODE.Type syntax /*>
+<* ************************** /*>
+
+
+<* **************************** /*>
+<* BEGIN CODE.Expression syntax /*>
+<* **************************** /*>
+
+<code Expression parse=(CODE.BoolH CODE.List)/>
 <code List parse=(
     ("," CODE.BoolH CODE.List) 
   | "")/>
@@ -57,5 +135,9 @@
     | FLOAT
     | ID
     | "[]"
-    | ("[" CODE.ListH "]")
-    | ("(" CODE.ListH ")"))/>
+    | ("[" CODE.Expression "]")
+    | ("(" CODE.Expression ")"))/>
+
+<* ************************** /*>
+<* END CODE.Expression syntax /*>
+<* ************************** /*>
