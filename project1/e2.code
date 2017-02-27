@@ -1,0 +1,35 @@
+<define PARSE CODE.Program/>
+<define TOKEN (("<" "=") (">" "=") ("[" "]") (":" "="))/>
+<define KEYWORDS (
+    ("hd") 
+    ("tl") 
+    ("ref") 
+    ("not") 
+    ("and") 
+    ("or") 
+    ("while") 
+    ("do") 
+    ("val") 
+    ("int") 
+    ("real") 
+    ("unit") 
+    ("bool")
+    ("if")
+    ("then")
+    ("else")
+    ("let")
+    ("in")
+    )/>
+
+<code Start parse=LIST(CODE.Program, "\n")/>
+<code Program parse=(CODE.Update)/>
+
+<code Update parse=(("(" CODE.Program CODE.UpdateIf ")") | CODE.UpdateIf)/>
+<code UpdateIf parse=(("if" CODE.Expression "then" CODE.UpdateLet CODE.UpdateElse) | CODE.UpdateLet)/>
+<code UpdateElse parse=("else" CODE.UpdateLet)/>
+<code UpdateLet parse=(("let" CODE.Sequence "in" CODE.Program CODE.UpdateValue "end") | CODE.UpdateAssign)/>
+<code UpdateAssign parse=(CODE.UpdateValue | (CODE.Expression ":=" CODE.UpdateValue))/>
+<code UpdateValue parse=(CODE.Expression | CODE.Update)/>
+
+
+<code Expression parse=(INT | ID)/>

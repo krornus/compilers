@@ -1,1 +1,7 @@
-val x: int = ;
+val x : int = 3;
+if (a < b) then a else b;
+let val a = ref 1 in a:=3; 
+!a+b end; 
+while (!a < b) do a := !a + 1; 
+val a = ref 2.0 ; 
+val a : real ref = ref 2.0 ;

@@ -1,5 +1,5 @@
 <define PARSE CODE.Program/>
-<define TOKEN (("<" "=") (">" "=") ("[" "]") (":" "=") (":" ":"))/>
+<define TOKEN (("<" "=") (">" "=") ("[" "]") (":" "="))/>
 
 <define KEYWORDS (
     ("hd") 
@@ -31,29 +31,31 @@
     e2: CODE.Update
 /*>
 
-<code Program parse=((CODE.Statement CODE.Program) | "")/>
+<code Program parse=(CODE.";")/>
 
-<code Statement parse=(
-      (CODE.Update ";")
-    | (CODE.Bind ";")
-    | ("while" CODE.Expression "do" CODE.Statement))/>
 
 <code Bind parse=("val" ID ":" CODE.TType "=" CODE.Update)/>
+
 
 <* ************************ /*>
 <* BEGIN CODE.Update syntax /*>
 <* ************************ /*>
 
-<code Update parse=(("(" CODE.Program CODE.UpdateIf ")") | CODE.UpdateIf)/>
-<code UpdateIf parse=(("if" CODE.Expression "then" CODE.UpdateIf CODE.UpdateElse) | CODE.UpdateValue)/>
-<code UpdateElse parse=("else" CODE.UpdateValue)/>
-<code UpdateLet parse=(("let" CODE.Sequence "in" CODE.Program CODE.Update "end")|CODE.UpdateValue)/>
-<code UpdateAssign parse=((CODE.Expression ":=" CODE.UpdateValue)|CODE.UpdateValue)/>
+<code Update parse=(("(" CODE.Program CODE.UpdateIf ")") 
+    | CODE.UpdateIf)/>
+<code UpdateIf parse=(("if" CODE.Expression "then" CODE.UpdateIf CODE.UpdateElse) 
+    | CODE.UpdateLet)/>
+<code UpdateElse parse=("else" CODE.UpdateLet)/>
+<code UpdateLet parse=(("let" CODE.Sequence "in" CODE.Program CODE.Update "end") 
+    | CODE.UpdateAssign)/>
+<code UpdateAssign parse=((CODE.Expression ":=" CODE.UpdateValue)
+    | CODE.UpdateValue)/>
 <code UpdateValue parse=(Expression)/>
 
 <* ********************** /*>
 <* END CODE.Update syntax /*>
 <* ********************** /*>
+
 
 <code Sequence parse=((CODE.Update CODE.SequenceH))/>
 <code SequenceH parse=((";" CODE.Update CODE.SequenceH) | "")/>
@@ -61,6 +63,7 @@
 <* **************************** /*>
 <* BEGIN CODE.VType syntax /*>
 <* **************************** /*>
+
 
 <code TType parse=(CODE.TMul CODE.TMulH)/>
 <code TMulH parse=(("*" CODE.TMulH) | "")/>
@@ -113,7 +116,8 @@
 
 <code ConsH parse=(CODE.Unary CODE.Cons)/>
 <code Cons parse=(
-      ("::" CODE.Unary CODE.Cons) 
+      ("*" CODE.Unary CODE.Cons) 
+    | ("/" CODE.Unary CODE.Cons) 
     | "")/>
 
 <code Unary parse=(
