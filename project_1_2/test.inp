@@ -1,0 +1,8 @@
+!ab < 2 and not !ab;
+
+let val x1 : int = 5; val ab: int ref = ref 3; val y : real = -1.67 in
+    ab := hd(!ab) + y * x;
+    if !ab < 2 and not !ab > 3 then ab := -2 else ab := 3.1415;
+    !ab
+end;
+

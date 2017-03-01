@@ -1,0 +1,14 @@
+val t : real list ref = ref [5.5 , 4.5 + 7.6];
+
+val xyz : int ref = ref 2.9;
+
+val a : real = if a then b else c;
+
+val j : bool = not (123/2>3);
+
+foo := [[ref 5.0]];
+
+if b - 3 then b + 5 else a;
+
+if (a + b =3) then a::e else (1+1; b; 5<6);
+

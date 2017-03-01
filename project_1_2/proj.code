@@ -1,5 +1,5 @@
 <define PARSE CODE.Program/>
-<define TOKEN (("<" "=") (">" "=") ("[" "]") (":" "="))/>
+<define TOKEN (("<" "=") (">" "=") ("[" "]") (":" "=") (":" ":"))/>
 
 <define KEYWORDS (
     ("hd") 
@@ -27,54 +27,54 @@
     c:  CODE.Sequence
     s:  CODE.Statement
     d:  CODE.Bind
-    t:  CODE.VType
+    t:  CODE.TType
+    e:  CODE.Expression
     e2: CODE.Update
 /*>
 
-<code Program parse=(CODE.";")/>
+<code Program parse=((CODE.Statement CODE.Program) | "")/>
+<code ProgramSub parse=((CODE.Update (";" CODE.ProgramSub) | "") | (CODE.Bind ";" CODE.ProgramSub) | ("while" CODE.Expression "do" CODE.Statement CODE.ProgramSub) | "")/>
 
+<code Statement parse=(
+      (CODE.Update ";")
+    | (CODE.Bind ";")
+    | ("while" CODE.Expression "do" CODE.Statement))/>
 
 <code Bind parse=("val" ID ":" CODE.TType "=" CODE.Update)/>
 
+<code Sequence parse=((CODE.Bind CODE.SequenceH))/>
+<code SequenceH parse=((";" CODE.Bind CODE.SequenceH) | "")/>
 
 <* ************************ /*>
 <* BEGIN CODE.Update syntax /*>
 <* ************************ /*>
 
-<code Update parse=(("(" CODE.Program CODE.UpdateIf ")") 
-    | CODE.UpdateIf)/>
-<code UpdateIf parse=(("if" CODE.Expression "then" CODE.UpdateIf CODE.UpdateElse) 
-    | CODE.UpdateLet)/>
+<code Update parse=(("(" CODE.ProgramSub ")") | CODE.UpdateIf)/>
+<code UpdateIf parse=(("if" CODE.Expression "then" CODE.UpdateLet CODE.UpdateElse) | CODE.UpdateLet )/>
 <code UpdateElse parse=("else" CODE.UpdateLet)/>
-<code UpdateLet parse=(("let" CODE.Sequence "in" CODE.Program CODE.Update "end") 
-    | CODE.UpdateAssign)/>
-<code UpdateAssign parse=((CODE.Expression ":=" CODE.UpdateValue)
-    | CODE.UpdateValue)/>
-<code UpdateValue parse=(Expression)/>
+<code UpdateLet parse=(("let" CODE.Sequence "in" CODE.ProgramSub "end")| CODE.UpdateAssign)/>
+<code UpdateAssign parse=(CODE.Update | (CODE.Expression CODE.UpdateAssignH))/>
+<code UpdateAssignH parse=((":=" CODE.Update) | "")/>
 
 <* ********************** /*>
 <* END CODE.Update syntax /*>
 <* ********************** /*>
 
 
-<code Sequence parse=((CODE.Update CODE.SequenceH))/>
-<code SequenceH parse=((";" CODE.Update CODE.SequenceH) | "")/>
-
 <* **************************** /*>
-<* BEGIN CODE.VType syntax /*>
+<* BEGIN CODE.TType syntax /*>
 <* **************************** /*>
 
+<code TType parse=(CODE.TListRef CODE.TTypeH)/>
+<code TTypeH parse=(("*" CODE.TListRef CODE.TTypeH) | "")/>
 
-<code TType parse=(CODE.TMul CODE.TMulH)/>
-<code TMulH parse=(("*" CODE.TMulH) | "")/>
-<code TMul parse=((CODE.TTRefH CODE.TList))/>
-<code TList parse=(("list" CODE.TList) | "")/>
-<code TTRefH parse=((CODE.TBase CODE.TRef))/>
-<code TRef parse=(("ref" CODE.TRef) | "")/>
-<code TBase parse=("int" | "real" | "unit" | "bool")/>
+<code TListRef parse=(CODE.TBase CODE.TListRefH)/>
+<code TListRefH parse=((("ref"|"list") CODE.TListRefH) | "")/>
+
+<code TBase parse=("int"|"real"|"unit"|"bool")/>
 
 <* ************************** /*>
-<* END CODE.VType syntax /*>
+<* END CODE.TType syntax /*>
 <* ************************** /*>
 
 
@@ -116,17 +116,17 @@
 
 <code ConsH parse=(CODE.Unary CODE.Cons)/>
 <code Cons parse=(
-      ("*" CODE.Unary CODE.Cons) 
-    | ("/" CODE.Unary CODE.Cons) 
+      ("::" CODE.Unary CODE.Cons) 
     | "")/>
 
+
 <code Unary parse=(
-      ("-" CODE.Value)
-    | ("hd" CODE.Value)
-    | ("tl" CODE.Value)
-    | ("ref" CODE.Value)
-    | ("!" CODE.Value)
-    | ("not" CODE.Value)
+      ("-" CODE.Unary)
+    | ("hd" CODE.Unary)
+    | ("tl" CODE.Unary)
+    | ("ref" CODE.Unary)
+    | ("!" CODE.Unary)
+    | ("not" CODE.Unary)
     | (CODE.Value))/>
 
 <code Value parse=(

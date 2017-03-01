@@ -1,0 +1,86 @@
+<define PARSE CODE.Program/>
+<define TOKEN (("<" "=") (">" "=") ("[" "]") (":" "=") (":" ":"))/>
+
+<define KEYWORDS (
+    ("hd") 
+    ("tl") 
+    ("ref") 
+    ("not") 
+    ("and") 
+    ("or") 
+    )/>
+
+<* 
+    p:  CODE.Program
+    c:  CODE.Sequence
+    s:  CODE.Statement
+    d:  CODE.Bind
+    t:  CODE.TType
+    e:  CODE.Expression
+    e2: CODE.Update
+/*>
+
+<code Program parse=((CODE.Expression ";" CODE.Program) | "")/>
+
+<* **************************** /*>
+<* BEGIN CODE.Expression syntax /*>
+<* **************************** /*>
+
+<code Expression parse=(CODE.BoolH CODE.List)/>
+<code List parse=(
+    ("," CODE.BoolH CODE.List) 
+  | "")/>
+
+<code BoolH parse=(CODE.ComparisonH CODE.Bool)/>
+<code Bool parse=(
+      ("and" CODE.ComparisonH CODE.Bool) 
+    | ("or" CODE.ComparisonH CODE.Bool)
+    | "")/>
+
+<code ComparisonH parse=(CODE.AddH CODE.Comparison)/>
+<code Comparison parse=(
+      ("<" CODE.AddH CODE.Comparison) 
+    | (">" CODE.AddH CODE.Comparison)
+    | ("=" CODE.AddH CODE.Comparison)
+    | ("<=" CODE.AddH CODE.Comparison)
+    | (">=" CODE.AddH CODE.Comparison)
+    | "")/>
+
+<code AddH parse=(CODE.MulH CODE.Add)/>
+<code Add parse=(
+      ("+" CODE.MulH CODE.Add) 
+    | ("-" CODE.MulH CODE.Add) 
+    | "")/>
+
+<code MulH parse=(CODE.ConsH CODE.Mul)/>
+<code Mul parse=(
+      ("*" CODE.ConsH CODE.Mul) 
+    | ("/" CODE.ConsH CODE.Mul) 
+    | "")/>
+
+<code ConsH parse=(CODE.Unary CODE.Cons)/>
+<code Cons parse=(
+      ("::" CODE.Unary CODE.Cons) 
+    | "")/>
+
+
+<code Unary parse=(
+      ("-" CODE.Unary)
+    | ("hd" CODE.Unary)
+    | ("tl" CODE.Unary)
+    | ("ref" CODE.Unary)
+    | ("!" CODE.Unary)
+    | ("not" CODE.Unary)
+    | (CODE.Value))/>
+
+<code Value parse=(
+      INT
+    | FLOAT
+    | ID
+    | "[]"
+    | ("[" CODE.Expression "]")
+    | ("(" CODE.Expression ")"))/>
+
+<* ************************** /*>
+<* END CODE.Expression syntax /*>
+<* ************************** /*>

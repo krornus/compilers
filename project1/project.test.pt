@@ -1,2 +1,0 @@
-<parameter fn message="input file"/>
-<input from=(fn) syntax="grammar.test.code" />
