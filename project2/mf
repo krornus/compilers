@@ -1,0 +1,11 @@
+#!/bin/bash
+
+if [ $# -lt 1 ]; then
+    echo "usage: ./mf <regex>"
+    exit 1
+fi
+echo $1
+
+make 2> out
+grep -E $1 out --color
+rm out

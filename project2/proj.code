@@ -1,0 +1,362 @@
+<define PARSE CODE.Program/>
+<define TOKEN (("<" "=") (">" "=") ("[" "]") (":" "=") (":" ":"))/>
+
+<define KEYWORDS (
+    ("hd") 
+    ("tl") 
+    ("ref") 
+    ("not") 
+    ("and") 
+    ("or") 
+    ("while") 
+    ("do") 
+    ("val") 
+    ("int") 
+    ("real") 
+    ("unit") 
+    ("bool")
+    ("if")
+    ("then")
+    ("else")
+    ("let")
+    ("in")
+    ("fun")
+    ("end")
+    )/>
+
+<* 
+    p:  CODE.Program
+    c:  CODE.Sequence
+    s:  CODE.Statement
+    d:  CODE.Bind
+    t:  CODE.TType
+    e:  CODE.Expression
+    e2: CODE.Update
+/*>
+
+<code TypeInt match=CODE.Value/>
+<code TypeFloat match=CODE.Value/>
+<code TypeBool match=CODE.Value/>
+<code TypeError match=CODE.Value/>
+<code TypeList pars=(e) match=CODE.Value/>
+<code TypeTuple pars=(e) match=CODE.Value/>
+<code TypeRef pars=(e) match=CODE.Value/>
+<code TypeNull match=CODE.Value/>
+
+<code Program parse=((CODE.Statement CODE.Program) | "")/>
+<code ProgramSub parse=((CODE.ProgramSubH CODE.ProgramSub) | "")/>
+<code ProgramSubH parse=((CODE.Update (";" CODE.ProgramSubH) | "") | (CODE.Bind ";") | ("while" CODE.Expression "do" CODE.ProgramSubH))/>
+
+<code Statement parse=(
+      (CODE.Update ";")
+    | (CODE.Bind ";")
+    | ("while" CODE.Expression "do" CODE.Statement))/>
+
+<code Bind parse=(("val" (id=ID) ":" (t=CODE.TType) "=" CODE.Update 
+        eval(
+            if(LookupVariable(id)) {
+                print("LINE :" LINE_NO " var " id " declared");
+            } else {
+                insert_entry(id, t);
+            }
+        )) 
+    | (CODE.BindH))/>
+<code BindH parse=(("fun" ID "(" CODE.FuncVars ")" ":" CODE.TType "=" CODE.Update))/>
+<code FuncVars parse=((ID ":" CODE.TType CODE.FuncVarsH))/>
+<code FuncVarsH parse=(("," ID ":" CODE.TType) | "")/>
+
+<code Sequence parse=((CODE.Bind CODE.SequenceH))/>
+<code SequenceH parse=((";" CODE.Bind CODE.SequenceH) | "")/>
+
+<* ************************ /*>
+<* BEGIN CODE.Update syntax /*>
+<* ************************ /*>
+
+<code Update parse=(("(" CODE.ProgramSub ")") | CODE.UpdateIf)/>
+<code UpdateIf parse=(("if" CODE.Expression "then" CODE.Update "else" CODE.Update) | CODE.UpdateLet )/>
+<code UpdateLet parse=(("let" CODE.Sequence "in" CODE.ProgramSub "end")| CODE.UpdateAssign)/>
+<code UpdateAssign parse=((CODE.Expression CODE.UpdateAssignH))/>
+<code UpdateAssignH parse=((":=" CODE.Expression) | "")/>
+
+<* ********************** /*>
+<* END CODE.Update syntax /*>
+<* ********************** /*>
+
+
+<* **************************** /*>
+<* BEGIN CODE.TType syntax /*>
+<* **************************** /*>
+
+<code TType parse=(CODE.TListRef CODE.TTypeH)/>
+<code TTypeH parse=(("*" CODE.TListRef CODE.TTypeH) | "")/>
+
+<code TListRef parse=(CODE.TBase CODE.TListRefH)/>
+<code TListRefH parse=((("ref"|"list") CODE.TListRefH) | "")/>
+
+<code TBase parse=("int"|"real"|"unit"|"bool")/>
+
+<* ************************** /*>
+<* END CODE.TType syntax /*>
+<* ************************** /*>
+
+
+<* **************************** /*>
+<* BEGIN CODE.Expression syntax /*>
+<* **************************** /*>
+
+<code Expression parse=((t1=CODE.BoolH) (t2=CODE.Tuple) 
+    eval(
+        if(HEAD(t2) == t2) {
+            return t2;
+        } else {
+            return t1::t2;
+        }
+        return t2;
+    ))/>
+
+<code Tuple parse=(
+    ("," (t1=CODE.BoolH) (t2=CODE.Tuple)
+        eval(
+            return t1 :: t2;
+        ))
+  | "" eval(return INHERIT))/>
+
+<code BoolH parse=(CODE.ComparisonH (t=CODE.Bool) eval(return t))/>
+<code Bool parse=(
+      ("and" CODE.ComparisonH (t=CODE.Bool)
+        eval(
+            if (t == INHERIT && t == TypeBool) { 
+                return CODE.TypeBool; 
+            } else if (t == CODE.TypeError) {
+                return CODE.TypeError;
+            } else { 
+                print("Line " LINE_NO ": type error: " INHERIT " and " t); 
+                return CODE.TypeBool; 
+            }
+        ))
+    | ("or" CODE.ComparisonH (t=CODE.Bool)
+        eval(
+            if (t == INHERIT && t == TypeBool) { 
+                return CODE.TypeBool; 
+            } else if (t == CODE.TypeError) {
+                return CODE.TypeError;
+            } else { 
+                print("Line " LINE_NO ": type error: " INHERIT " or " t); 
+                return CODE.TypeBool; 
+            }
+        ))
+    | "" eval(return INHERIT))/>
+
+<code ComparisonH parse=(CODE.AddH (t=CODE.Comparison) eval(return t))/>
+<code Comparison parse=(
+      ("<" (t=CODE.AddH) CODE.Comparison
+        eval(
+            if (INHERIT == t) { 
+                return CODE.TypeBool; 
+            } else if (t == CODE.TypeError || INHERIT == CODE.TypeError) {
+                return CODE.TypeError;
+            } else { 
+                print("Line " LINE_NO ": type error: " INHERIT " < " t); 
+                return CODE.TypeBool; 
+            }
+        ))
+    | (">"  (t=CODE.AddH) CODE.Comparison
+        eval(
+            if (INHERIT == t) { 
+                return CODE.TypeBool; 
+            } else if (t == CODE.TypeError || INHERIT == CODE.TypeError) {
+                return CODE.TypeError;
+            } else { 
+                print("Line " LINE_NO ": type error: " INHERIT " > " t); 
+                return CODE.TypeBool; 
+            }
+        ))
+    | ("="  (t=CODE.AddH) CODE.Comparison
+        eval(
+            if (INHERIT == t) { 
+                return CODE.TypeBool; 
+            } else if (t == CODE.TypeError || INHERIT == CODE.TypeError) {
+                return CODE.TypeError;
+            } else { 
+                print("Line " LINE_NO ": type error: " INHERIT " = " t); 
+                return CODE.TypeBool; 
+            }
+        ))
+    | ("<=" (t=CODE.AddH) CODE.Comparison
+        eval(
+            if (INHERIT == t) { 
+                return CODE.TypeBool; 
+            } else if (t == CODE.TypeError || INHERIT == CODE.TypeError) {
+                return CODE.TypeError;
+            } else { 
+                print("Line " LINE_NO ": type error: " INHERIT " <= " t); 
+                return CODE.TypeBool; 
+            }
+        ))
+    | (">=" (t=CODE.AddH) CODE.Comparison
+        eval(
+            if (INHERIT == t) { 
+                return CODE.TypeBool; 
+            } else if (t == CODE.TypeError || INHERIT == CODE.TypeError) {
+                return CODE.TypeError;
+            } else { 
+                print("Line " LINE_NO ": type error: " INHERIT " >= " t); 
+                return CODE.TypeBool; 
+            }
+        ))
+    | ("" eval(return INHERIT)))/>
+
+<code AddH parse=(CODE.MulH (t=CODE.Add) eval(return t))/>
+<code Add parse=(
+      ("+" (t=CODE.MulH) CODE.Add
+        eval(
+            if(t == INHERIT && (t == TypeInt || t == TypeFloat)){
+                return t;
+            } else if (t == CODE.TypeError) {
+                return CODE.TypeError;
+            } else {
+                print("Line " LINE_NO ": type error: " INHERIT " + " t);
+                return INHERIT;
+            }
+        ))
+    | ("-" (t=CODE.MulH) CODE.Add
+        eval(
+            if(t == INHERIT && (t == TypeInt || t == TypeFloat)){
+                return t;
+            } else if (t == CODE.TypeError) {
+                return CODE.TypeError;
+            } else {
+                print("Line " LINE_NO ": type error: " INHERIT " - " t);
+                return INHERIT;
+            }
+        ))
+    | "" eval(return INHERIT))/>
+
+<code MulH parse=(CODE.ConsH (t=CODE.Mul) eval(return t))/>
+<code Mul parse=(
+      ("*" (t=CODE.ConsH) CODE.Mul
+        eval(
+            if(t == INHERIT && (t == TypeInt || t == TypeFloat)){
+                return t;
+            } else if (t == CODE.TypeError) {
+                return CODE.TypeError;
+            } else {
+                print("Line " LINE_NO ": type error: " INHERIT " * " t);
+                return INHERIT;
+            }
+        ))
+    | ("/" (t=CODE.ConsH) CODE.Mul
+        eval(
+            if(t == INHERIT && (t == TypeInt || t == TypeFloat)){
+                return t;
+            } else if (t == CODE.TypeError) {
+                return CODE.TypeError;
+            } else {
+                print("Line " LINE_NO ": type error: " INHERIT " / " t);
+                return INHERIT;
+            }
+        ))
+    | "" eval(return INHERIT))/>
+
+<code ConsH parse=(CODE.Unary (t=CODE.Cons) eval(return t))/>
+<code Cons parse=(
+      ("::" (t=CODE.Unary) CODE.Cons 
+        eval(
+            if(t : TypeList#INHERIT){
+                return t;
+            } else if (t == CODE.TypeError) {
+                return CODE.TypeError;
+            } else {
+                print("Line " LINE_NO ": type error: " INHERIT " :: " t);
+                return TypeList#INHERIT;
+            }
+        ))
+    | "" eval(return INHERIT))/>
+
+
+<code Unary parse=(
+      ("-" (t=CODE.Unary)
+        eval(
+            if(t == CODE.TypeInt || t == CODE.TypeFloat) {
+                return t; 
+            } else if (t == CODE.TypeError) {
+                return CODE.TypeError;
+            } else {
+                return CODE.TypeError;
+            }
+        ))
+    | ("hd" (t=CODE.Unary) 
+        eval(
+            if(t : CODE.TypeList#x) {
+                return t[TypeList.e];
+            } else if (t == CODE.TypeError) {
+                return CODE.TypeError;
+            } else {
+                print("Line " LINE_NO ": type error: hd " t);
+                return CODE.TypeError;
+            }
+         ))
+    | ("tl" (t=CODE.Unary) 
+        eval(
+            if(t : TypeList#x) {
+                return t;
+            } else if (t == CODE.TypeError) {
+                return CODE.TypeError;
+            } else {
+                print("Line " LINE_NO ": type error: tl " t);
+            }
+        ))
+    | ("ref" (t=CODE.Unary)
+        eval(
+            return TypeRef#t;
+        ))
+    | ("!" (t=CODE.Unary)
+        eval(
+            if(t : TypeRef#x) {
+                return t[TypeRef.e];
+            } else if (t == CODE.TypeError) {
+                return CODE.TypeError;
+            } else {
+                print("Line " LINE_NO ": type error: ! " t);
+            }
+        ))
+    | ("not" (t=CODE.Unary) 
+        eval(
+            if (t == CODE.TypeBool) {
+                print("Line " LINE_NO ": type error: not " t); 
+                return CODE.TypeError; 
+            } else if (t == CODE.TypeError) {
+                return CODE.TypeError;
+            } else { 
+                return CODE.TypeBool;
+            }
+        ))
+    | ((t=CODE.Value) eval(return t;)))/>
+
+<code Value parse=(
+      (INT eval(return(TypeInt)))
+    | (FLOAT eval(return CODE.TypeFloat))
+    | ((id=ID) CODE.ExpParen
+        eval(
+            t = LookupVariable(id);
+            if(!t) {
+                print("Line " LINE_NO ": type error: undefined variable: " id);
+                return CODE.TypeError;
+            } else {
+                return t; 
+            }
+        ))
+    | ("[]" eval(return CODE.TypeList#CODE.TypeNull))
+    | ("(" (t=CODE.Expression) ")" eval(return t;))
+    | ("[" (t=CODE.Expression) "]" 
+        eval(
+            t2 = CODE.TypeList#(CODE.TypeInt); 
+            return CODE.TypeList#(t);
+            ))
+    )/>
+
+<code ExpParen parse=(("(" (CODE.Expression ")" ) | ( ")" ) ) | "")/>
+
+<* ************************** /*>
+<* END CODE.Expression syntax /*>
+<* ************************** /*>

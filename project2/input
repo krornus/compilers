@@ -1,0 +1,42 @@
+input:
+  2=3.2 or 4=5;
+  -44+6;
+output:
+  Line 1: type error: TypeInt = TypeFloat
+input:
+  2 + 2 - 2.5 * 5;
+output:
+  Line 1: type error: TypeFloat * TypeInt
+  Line 1: type error:  TypeInt - TypeFloat
+input:
+  !a + b;
+  !a -1;
+output:
+  Line 1: type error: undefined variable: a
+  Line 1: type error: undefined variable: b
+  Line 3: type error: undefined variable: a
+input:
+  hd([2.2])  + tl([3,4]);
+  not hd(1) < 2 or hd(1) = 2;
+  !(ref 2) :: [2,3,4];
+output:
+  Line 1: type error: TypeFloat + TypeList#TypeInt
+  Line 3: type error: hd TypeInt
+  Line 3: type error: hd TypeInt
+input:
+  [2,3,4] :: [4,5,6];
+  3 :: ref [];
+  a::(!mylist);
+  d = d + !(b);
+  22 > ([32]);
+  ref 2.0 < 3.5;
+output:
+  Line 1 : type error: TypeList#TypeInt :: TypeList#TypeInt
+  Line 3 : type error: TypeInt :: TypeRef#TypeList#TypeNull
+  Line 5: type error: undefined variable: a
+  Line 5: type error: undefined variable: mylist
+  Line 7: type error: undefined variable: d
+  Line 7: type error: undefined variable: d
+  Line 7: type error: undefined variable: b
+  Line 9: type error: TypeInt > TypeList#TypeInt
+  Line 11: type error: TypeRef#TypeFloat < TypeFloat
